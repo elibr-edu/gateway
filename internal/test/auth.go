@@ -1,16 +1,17 @@
-package auth
+package test
 
 import (
-	"github.com/elibr-edu/gateway/internal/auth/handler"
+	"github.com/elibr-edu/gateway/internal/test/handler"
 	"github.com/gin-gonic/gin"
 )
 
 func RegisterRoutes(r *gin.RouterGroup) {
 	handle := NewHandler()
 
-	r.POST("/login", handle.Login)
-	r.POST("/refresh", handle.Refresh)
 	r.GET("/ping", handle.Ping)
+	r.GET("/failure", handle.Failure)
+	r.GET("/rate", handle.Rate)
+
 }
 
 func NewHandler() *handler.Handler {

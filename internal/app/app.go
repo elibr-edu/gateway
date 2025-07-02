@@ -8,8 +8,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/WhiCu/middleware/circuit"
 	"github.com/doganarif/govisual"
 	"github.com/elibr-edu/gateway/internal/auth"
+	"github.com/elibr-edu/gateway/internal/middleware"
+	"github.com/elibr-edu/gateway/internal/test"
 	"github.com/gin-gonic/gin"
 )
 
@@ -49,6 +52,9 @@ func NewApp() *App {
 	// Create a new Gin router
 	router := gin.Default()
 
+	// Register the middleware
+	RegisterMiddleware(router)
+
 	// Register the routes
 	RegisterRoutes(router)
 
@@ -69,9 +75,27 @@ func NewApp() *App {
 	}
 }
 
+func RegisterMiddleware(router *gin.Engine) {
+	// Register Circuit Breaker middleware
+}
+
 func RegisterRoutes(router *gin.Engine) {
+	cfg := &circuit.CircuitBreakerConfig{
+		FailureThreshold:   5,
+		RecoveryTimeout:    5 * time.Second,
+		SuccessThreshold:   5,
+		WindowSize:         5 * time.Second,
+		MaxConcurrentCalls: 5,
+	}
 	// Register the Auth routes
-	auth.RegisterRoutes(router.Group("/auth"))
+	ag := router.Group("/auth")
+	ag.Use(middleware.CircuitBreaker(cfg))
+	auth.RegisterRoutes(ag)
+
+	// Register the Test routes
+	tg := router.Group("/test")
+	tg.Use(middleware.CircuitBreaker(cfg))
+	test.RegisterRoutes(tg)
 }
 
 func (a *App) Run() error {
