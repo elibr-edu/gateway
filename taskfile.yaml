@@ -5,14 +5,10 @@ silent: false
 env:
   PATH_EXE: ./tmp/bin
   PATH_MAIN_API: ./cmd/app
-  PATH_CONFIG: .config/
+  PATH_CONFIG: ./config/config.yaml
+  PORT: 8081
 
 dotenv: ['.env', '{{.PATH_CONFIG}}/.env']
-
-includes:
-  # migrate: 
-  #   taskfile: ./cmd/migrator/taskfile.yaml
-  #   dir: ./
 
 
 tasks:

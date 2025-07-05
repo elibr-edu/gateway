@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"net"
+	"strings"
 	"time"
 )
 
@@ -63,5 +65,46 @@ func (db *DatabaseConfig) DSN() string {
 
 // ServerAddr returns the server address
 func (srv *ServerConfig) ServerAddr() string {
-	return fmt.Sprintf("%s:%s", srv.Host, srv.Port)
+	return net.JoinHostPort(srv.Host, srv.Port)
+}
+
+func (c *Config) Format() string {
+	var b strings.Builder
+
+	fmt.Fprintf(&b, "Server:\n")
+	fmt.Fprintf(&b, "  Host:           %s\n", c.Server.Host)
+	fmt.Fprintf(&b, "  Port:           %s\n", c.Server.Port)
+	fmt.Fprintf(&b, "  ReadTimeout:    %s\n", c.Server.ReadTimeout)
+	fmt.Fprintf(&b, "  WriteTimeout:   %s\n", c.Server.WriteTimeout)
+	fmt.Fprintf(&b, "  IdleTimeout:    %s\n", c.Server.IdleTimeout)
+
+	fmt.Fprintf(&b, "\nDatabase:\n")
+	fmt.Fprintf(&b, "  Host:           %s\n", c.Database.Host)
+	fmt.Fprintf(&b, "  Port:           %s\n", c.Database.Port)
+	fmt.Fprintf(&b, "  User:           %s\n", c.Database.User)
+	fmt.Fprintf(&b, "  Password:       %s\n", maskSecret(c.Database.Password))
+	fmt.Fprintf(&b, "  DBName:         %s\n", c.Database.DBName)
+	fmt.Fprintf(&b, "  SSLMode:        %s\n", c.Database.SSLMode)
+
+	fmt.Fprintf(&b, "\nJWT:\n")
+	fmt.Fprintf(&b, "  SecretKey:      %s\n", maskSecret(c.JWT.SecretKey))
+	fmt.Fprintf(&b, "  Duration:       %s\n", c.JWT.Duration)
+
+	fmt.Fprintf(&b, "\nStorage:\n")
+	fmt.Fprintf(&b, "  Path:           %s\n", c.Storage.Path)
+
+	fmt.Fprintf(&b, "\nLogger:\n")
+	fmt.Fprintf(&b, "  Level:          %s\n", c.Logger.Level)
+
+	return b.String()
+}
+
+func maskSecret(secret string) string {
+	if secret == "" {
+		return "<empty>"
+	}
+	if len(secret) <= 4 {
+		return strings.Repeat("*", len(secret))
+	}
+	return secret[:2] + strings.Repeat("*", len(secret)-4) + secret[len(secret)-2:]
 }

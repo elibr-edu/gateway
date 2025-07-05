@@ -13,6 +13,7 @@ import (
 	"github.com/elibr-edu/gateway/internal/auth"
 	"github.com/elibr-edu/gateway/internal/middleware"
 	"github.com/elibr-edu/gateway/internal/test"
+	"github.com/elibr-edu/gateway/pkg/config"
 	"github.com/gin-gonic/gin"
 )
 
@@ -48,9 +49,13 @@ func gracefulShutdown(apiServer *http.Server, done chan error) {
 	done <- nil
 }
 
-func NewApp() *App {
+func NewApp(cfg *config.Config) *App {
 	// Create a new Gin router
-	router := gin.Default()
+	router := gin.New()
+	router.Use(gin.Logger())
+	router.GET("/", func(c *gin.Context) {
+		c.JSONP(http.StatusOK, gin.H{"Status": "OK"})
+	})
 
 	// Register the middleware
 	RegisterMiddleware(router)
@@ -60,13 +65,16 @@ func NewApp() *App {
 
 	// Create a new HTTP server
 	server := &http.Server{
-		Addr: ":8080",
+		Addr: cfg.Server.ServerAddr(),
 		Handler: govisual.Wrap(
 			router,
 			govisual.WithRequestBodyLogging(true),
 			govisual.WithResponseBodyLogging(true),
 			// govisual.WithOpenTelemetry(true),
 		),
+		ReadTimeout:  cfg.Server.ReadTimeout,
+		WriteTimeout: cfg.Server.WriteTimeout,
+		IdleTimeout:  cfg.Server.IdleTimeout,
 	}
 
 	return &App{
